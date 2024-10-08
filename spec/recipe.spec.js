@@ -1,55 +1,52 @@
-/* eslint-disable */
-
-import RecipeModel from "../src/models/recipe.js";
+import RecipeModel from "../src/models/recipe.js"; // Ensure the path is correct
 import db from "../src/config/db.js";
 
 describe("Recipe Model with Real Database", () => {
-  beforeAll(async () => {
+  // Helper function to set up test data
+  const setupTestData = async () => {
+    // Vider les tables avant chaque test pour éviter les conflits
+    await db.query("SET FOREIGN_KEY_CHECKS = 0"); // Désactiver les contraintes de clé étrangère temporairement
     await db.query("TRUNCATE TABLE recipes");
+    await db.query("TRUNCATE TABLE categories");
+    await db.query("SET FOREIGN_KEY_CHECKS = 1"); // Réactiver les contraintes de clé étrangère
 
-    // Insertion des données initiales pour les its
+    // Ajouter des catégories valides avant d'ajouter les recettes
+    await db.query(`
+      INSERT INTO categories (id, name) VALUES
+      (1, 'Dessert'),
+      (2, 'Main Course'),
+      (3, 'Appetizer')
+    `);
+
+    // Ajouter des recettes avec des categorie_id valides
     await db.query(`
       INSERT INTO recipes (titre, ingredients, type, categorie_id) VALUES
       ('Tiramisu', 'Mascarpone, Cafe, Biscuits', 'Dessert', 1),
-      ('Mousse au chocolat', 'Chocolat, Oeufs, Creme', 'Dessert', 1),
-      ('Creme brulee', 'Creme, Vanille, Sucre', 'Dessert', 1),
-      ('Salade Cesar', 'Laitue, Poulet, Croutons', 'Entree', 2),
-      ('Soupe de tomate', 'Tomates, Oignons, Basilic', 'Entree', 2),
-      ('Bruschetta', 'Pain, Tomates, Ail', 'Entree', 2),
-      ('Couscous', 'Semoule, Legumes, Agneau', 'Plat principal', 3),
-      ('Poulet roti', 'Poulet, Ail, Romarin', 'Plat principal', 3),
-      ('Lasagnes', 'Pates, Viande, Sauce tomate', 'Plat principal', 3),
-      ('Smoothie Fraise', 'Fraise, Lait, Sucre', 'Boisson', 4),
-      ('Limonade', 'Citron, Eau, Sucre', 'Boisson', 4),
-      ('Tacos', 'Tortilla, Viande, Legumes', 'Snack', 5),
-      ('Pizza Margarita', 'Tomates, Mozzarella, Basilic', 'Snack', 5);
-      
+      ('Mousse au chocolat', 'Chocolat, Oeufs, Creme', 'Dessert', 1)
     `);
-  });
-
-  // beforeEach(async () => {
-  //   await db.query("DELETE FROM recipes");
-  // });
+  };
 
   it("should create a new recipe", async () => {
+    await setupTestData(); // Set up data
     const uniqueTitle = "New Recipe " + Date.now();
     const newRecipe = {
       titre: uniqueTitle,
       ingredients: "Some ingredients",
       type: "Main",
-      categorie_id: 1,
+      categorie_id: 1, // Utiliser un ID de catégorie valide
     };
     const result = await RecipeModel.createRecipe(newRecipe);
     expect(result.id).toBeDefined();
   });
 
   it("should retrieve a recipe by ID", async () => {
+    await setupTestData(); // Set up data
     const uniqueTitle = "Retrieve Me " + Date.now();
     const newRecipe = {
       titre: uniqueTitle,
       ingredients: "Ingredients",
       type: "Main",
-      categorie_id: 2,
+      categorie_id: 2, // Utiliser un ID de catégorie valide
     };
     const createdRecipe = await RecipeModel.createRecipe(newRecipe);
     const recipe = await RecipeModel.getRecipeById(createdRecipe.id);
@@ -58,23 +55,24 @@ describe("Recipe Model with Real Database", () => {
   });
 
   it("should update a recipe", async () => {
+    await setupTestData(); // Set up data
     const uniqueTitle = "Recipe to Update " + Date.now();
     const createdRecipe = await RecipeModel.createRecipe({
       titre: uniqueTitle,
       ingredients: "Ingredients",
       type: "Main",
-      categorie_id: 3,
+      categorie_id: 1, // Utiliser un ID de catégorie valide
     });
 
     const updatedRecipeData = {
       titre: "Updated Recipe " + Date.now(),
       ingredients: "Updated ingredients",
       type: "Dessert",
-      categorie_id: 2,
+      categorie_id: 2, // Utiliser un autre ID valide
     };
     const updatedRecipe = await RecipeModel.updateRecipe(
       createdRecipe.id,
-      updatedRecipeData,
+      updatedRecipeData
     );
 
     expect(updatedRecipe.titre).toBe(updatedRecipeData.titre);
@@ -82,12 +80,13 @@ describe("Recipe Model with Real Database", () => {
   });
 
   it("should retrieve a recipe by title", async () => {
+    await setupTestData(); // Set up data
     const uniqueTitle = "Test Recipe " + Date.now();
     const newRecipe = {
       titre: uniqueTitle,
       ingredients: "Some ingredients",
       type: "Main",
-      categorie_id: 2,
+      categorie_id: 2, // Utiliser un ID de catégorie valide
     };
     await RecipeModel.createRecipe(newRecipe);
 
@@ -97,12 +96,21 @@ describe("Recipe Model with Real Database", () => {
   });
 
   it("should return null for a non-existent recipe by title", async () => {
+    await setupTestData(); // Set up data
     const recipe = await RecipeModel.getRecipeByTitle("Non-existent Title");
     expect(recipe).toBeNull();
   });
 
-  it("test delete", async () => {
-    const recipe = await RecipeModel.deleteRecipe(1);
-    expect(recipe).not.toBeNull();
+  it("should delete a recipe", async () => {
+    await setupTestData(); // Set up data
+    const newRecipe = {
+      titre: "Recipe to Delete",
+      ingredients: "Ingredients",
+      type: "Main",
+      categorie_id: 1, // Utiliser un ID de catégorie valide
+    };
+    const createdRecipe = await RecipeModel.createRecipe(newRecipe);
+    const result = await RecipeModel.deleteRecipe(createdRecipe.id);
+    expect(result).not.toBeNull();
   });
 });
