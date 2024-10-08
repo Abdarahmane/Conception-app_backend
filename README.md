@@ -223,11 +223,11 @@ Avant de commencer, assurez-vous d'avoir installé les éléments suivants sur v
 1. Clonez le dépôt :
 
 ```bash
-git clone https://github.com/Abdarahmane/API-RESTful-project.git
+git clone https://github.com/Abdarahmane/Conception-app_backend.git
 ```
 2. Accédez au répertoire du projet :
 ```bash
-cd API-RESTful-
+cd Conception-app_backend
 ```
 
 3. Installez les dépendances :
